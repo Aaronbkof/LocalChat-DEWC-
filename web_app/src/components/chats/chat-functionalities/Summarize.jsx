@@ -149,7 +149,7 @@ function Summarize() {
       fileContent = await parseDocxFileAsync(file);
     }
 
-    chatContext.addMessage("Summarize File: " + file.name, true);
+    chatContext.addMessage("Summarise File: " + file.name, true);
     chatContext.addFile(fileContent, file.name);
 
     let messageDate = chatContext.addMessage("Generating Message", false, selectedModel());  // temporary message to indicate progress

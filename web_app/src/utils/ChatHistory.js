@@ -48,16 +48,27 @@ export function getChatHistories() {
     let key = item[0];
     let value = item[1];
 
-    let chat = JSON.parse(value);
-
+    // Skip non-chat keys early
     if (!key.startsWith('chat-')) continue;
-    chatHistory.push({
-      chatId: key,
-      chatName: chat.chatName,
-      chatType: chat.chatType,
-      creationDate: chat.creationDate,
-      latestMessageDate: chat.latestMessageDate
-    });
+
+    try {
+      let chat = JSON.parse(value);
+      
+      // Validate that this is actually a chat object
+      if (chat && typeof chat === 'object' && chat.chatType) {
+        chatHistory.push({
+          chatId: key,
+          chatName: chat.chatName,
+          chatType: chat.chatType,
+          creationDate: chat.creationDate,
+          latestMessageDate: chat.latestMessageDate
+        });
+      }
+    } catch (error) {
+      console.warn(`Failed to parse chat data for key "${key}":`, error);
+      // Optionally remove corrupted data
+      // localStorage.removeItem(key);
+    }
   }
 
   return chatHistory;
@@ -107,8 +118,13 @@ export function getChatHistory(chatId) {
   let chatJson = localStorage.getItem(chatId);
   if (!chatJson) return [];
 
-  let chat = JSON.parse(chatJson);
-  return chat;
+  try {
+    let chat = JSON.parse(chatJson);
+    return chat;
+  } catch (error) {
+    console.error(`Failed to parse chat history for ${chatId}:`, error);
+    return [];
+  }
 }
 
 /**
@@ -126,4 +142,42 @@ export function renameChat(chatId, newName) {
   chat.chatName = newName;
 
   localStorage.setItem(chatId, JSON.stringify(chat));
+}
+
+/**
+ * Generates a title based on chat messages using the first user message
+ * @param {Array} messages - Array of chat messages
+ * @return {string} - Generated title
+ */
+export function generateChatTitle(messages) {
+  if (!messages || messages.length === 0) return 'New Chat';
+  
+  // Find the first user message
+  const firstUserMessage = messages.find(msg => msg.sender === 'userMessage');
+  
+  if (!firstUserMessage || !firstUserMessage.content) return 'New Chat';
+  
+  // Create a title from first 6 words of the first message
+  const words = firstUserMessage.content.trim().split(' ');
+  const title = words.slice(0, 6).join(' ');
+  
+  // Add ellipsis if message was longer
+  return words.length > 6 ? title + '...' : title;
+}
+
+/**
+ * Auto-updates chat title based on messages if it's still the default
+ * @param {string} chatId 
+ */
+export function autoUpdateChatTitle(chatId) {
+  const chat = getChatHistory(chatId);
+  if (!chat || !chat.messages || chat.messages.length === 0) return;
+  
+  // Only auto-update if title is still default or matches chatId
+  if (chat.chatName === 'New Chat' || chat.chatName === chatId) {
+    const newTitle = generateChatTitle(chat.messages);
+    if (newTitle !== 'New Chat') {
+      renameChat(chatId, newTitle);
+    }
+  }
 }

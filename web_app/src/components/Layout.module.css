@@ -24,7 +24,7 @@
 
 .chatHistoryEntry A {
     flex: 1;
-    max-width: 150px;
+    max-width: 250px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
