@@ -3,7 +3,7 @@ import { pipeline, env, SummarizationPipeline } from '@huggingface/transformers'
 
 import { ChatContext } from '../ChatContext';
 import styles from './Summarize.module.css';
-import { parseDocxFileAsync, parseHTMLFileAsync, parseTxtFileAsync, parsePdfFileAsync } from '../../../utils/FileReaders';
+import { parseDocxFileAsync, parseHTMLFileAsync, parseTxtFileAsync } from '../../../utils/FileReaders';
 import { pathJoin } from '../../../utils/PathJoin';
 
 
@@ -139,25 +139,14 @@ function Summarize() {
     let file = fileInput.files[0];
 
     let fileContent = "";
-    try {
-      if (file.name.endsWith('.txt')) {
-        fileContent = await parseTxtFileAsync(file);
-      } else if (file.name.endsWith('.html')) {
-        fileContent = await parseHTMLFileAsync(file);
-      } else if (file.name.endsWith('.docx')) {
-        fileContent = await parseDocxFileAsync(file);
-      } else if (file.name.endsWith('.pdf')) {
-        fileContent = await parsePdfFileAsync(file);
-      } else {
-        alert("Unsupported file type. Please use .txt, .html, .docx, or .pdf files.");
-        fileInput.value = null;
-        return;
-      }
-    } catch (error) {
-      console.error("Error parsing file:", error);
-      alert("Error processing file. Please try a different file format.");
-      fileInput.value = null;
-      return;
+    if (file.name.endsWith('.txt')) {
+      fileContent = await parseTxtFileAsync(file);
+    }
+    if (file.name.endsWith('.html')) {
+      fileContent = await parseHTMLFileAsync(file);
+    }
+    if (file.name.endsWith('.docx')) {
+      fileContent = await parseDocxFileAsync(file);
     }
 
     chatContext.addMessage("Summarize File: " + file.name, true);
@@ -193,7 +182,7 @@ function Summarize() {
           </Match>
           <Match when={tab() === "file"}>
             <div style="margin-top:2vh;margin-left:2vh;">
-              <input type="file" id="fileInput" accept=".txt, .html, .docx, .pdf" onChange={summarizeFileInput} />
+              <input type="file" id="fileInput" accept=".txt, .html., .docx" onChange={summarizeFileInput} />
             </div>
           </Match>
         </Switch>
